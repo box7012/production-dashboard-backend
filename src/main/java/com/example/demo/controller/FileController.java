@@ -8,34 +8,68 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api")
 public class FileController {
 
-    private final Path filesLocation = Paths.get("C:/Users/PC_05/Desktop/db"); // 실제 파일 저장 폴더 경로로 변경하세요
+    private final Path baseFilesLocation = Paths.get("C:/Users/PC_05/Desktop/DataPool");
 
-    // 1) 파일 목록 반환
-    @GetMapping("/files")
-    public List<String> listFiles() throws IOException {
-        if (!Files.exists(filesLocation) || !Files.isDirectory(filesLocation)) {
-            throw new IOException("파일 저장 폴더가 존재하지 않습니다.");
+    // 폴더별 파일 목록 반환
+    @GetMapping("/files/{folderName}")
+    public List<String> listFilesByFolder(@PathVariable String folderName) throws IOException {
+        Path folderPath = baseFilesLocation.resolve(folderName).normalize();
+
+        if (!Files.exists(folderPath) || !Files.isDirectory(folderPath)) {
+            throw new IOException("폴더가 존재하지 않습니다: " + folderPath.toString());
         }
-        try (var paths = Files.list(filesLocation)) {
+
+        try (Stream<Path> paths = Files.list(folderPath)) {
             return paths
                     .filter(Files::isRegularFile)
-                    .map(path -> path.getFileName().toString())
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .filter(name -> name.toLowerCase().endsWith(".zip"))
                     .collect(Collectors.toList());
         }
     }
 
-    // 2) 파일 다운로드
-    @GetMapping("/download/{filename:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    // 전체 현황 - D02, D07, D14, D20 모든 폴더 내 zip 파일 합쳐서 반환
+    @GetMapping("/files/all")
+    public List<String> listAllZipFiles() throws IOException {
+        String[] folders = {"D02", "D07", "D14", "D20"};
+        List<String> allFiles = new ArrayList<>();
+
+        for (String folder : folders) {
+            Path folderPath = baseFilesLocation.resolve(folder).normalize();
+
+            if (Files.exists(folderPath) && Files.isDirectory(folderPath)) {
+                try (Stream<Path> paths = Files.list(folderPath)) {
+                    List<String> zipFiles = paths
+                            .filter(Files::isRegularFile)
+                            .map(Path::getFileName)
+                            .map(Path::toString)
+                            .filter(name -> name.toLowerCase().endsWith(".zip"))
+                            .collect(Collectors.toList());
+                    allFiles.addAll(zipFiles);
+                }
+            }
+        }
+
+        return allFiles;
+    }
+
+    // 파일 다운로드 - 폴더명과 파일명 받아서 다운로드 처리
+    @GetMapping("/download/{folderName}/{filename:.+}")
+    public ResponseEntity<Resource> downloadFile(
+            @PathVariable String folderName,
+            @PathVariable String filename) {
         try {
-            Path file = filesLocation.resolve(filename).normalize();
+            Path file = baseFilesLocation.resolve(folderName).resolve(filename).normalize();
             if (!Files.exists(file) || !Files.isRegularFile(file)) {
                 return ResponseEntity.notFound().build();
             }

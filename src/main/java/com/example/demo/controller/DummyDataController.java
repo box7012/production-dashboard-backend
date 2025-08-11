@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/dummy")
-@CrossOrigin(origins = "*") // Vue 프론트 접근 허용
 public class DummyDataController {
     private final DummyDataService service;
 
