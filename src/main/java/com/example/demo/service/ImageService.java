@@ -17,8 +17,7 @@ import java.util.Collections;
 @Service
 public class ImageService {
 
-    // 예: 이미지 루트 폴더 경로 (환경변수나 application.yml에서 주입 권장)
-    private final Path rootLocation = Paths.get("C:/image_storage");
+    private final Path rootLocation = Paths.get("C:/Users/PC_05/Desktop/ImagePool");
 
     // 해당 tab 폴더 안의 이미지 파일명 리스트 반환
     public List<String> listImageFilenames(String tab) {
