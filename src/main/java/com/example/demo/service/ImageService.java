@@ -80,4 +80,33 @@ public class ImageService {
     }
 }
 
+    public void removeTagFromAllImages(String tab) {
+        try {
+            Path dir = rootLocation.resolve(tab);
+            if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+                throw new RuntimeException("Tab directory does not exist: " + tab);
+            }
+
+            try (Stream<Path> stream = Files.list(dir)) {
+                stream.filter(Files::isRegularFile).forEach(path -> {
+                    String filename = path.getFileName().toString();
+
+                    // 정규식으로 앞의 "(... )_" 패턴 제거
+                    String newFilename = filename.replaceFirst("^\\([^)]*\\)_", "");
+                    if (!newFilename.equals(filename)) {
+                        Path target = path.resolveSibling(newFilename);
+                        try {
+                            Files.move(path, target);
+                        } catch (IOException e) {
+                            throw new RuntimeException("Failed to rename file: " + filename, e);
+                        }
+                    }
+                });
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to remove tags from images in tab: " + tab, e);
+        }
+    }
+
+
 }

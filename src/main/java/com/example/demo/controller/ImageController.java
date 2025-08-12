@@ -62,4 +62,10 @@ public class ImageController {
         }
     }
 
+    @PostMapping("/{tab}/remove-tag")
+    public ResponseEntity<Void> removeTagFromAllImages(@PathVariable String tab) {
+        imageService.removeTagFromAllImages(tab);
+        return ResponseEntity.ok().build();
+    }
+
 }
