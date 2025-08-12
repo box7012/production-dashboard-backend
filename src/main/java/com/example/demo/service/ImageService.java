@@ -51,4 +51,33 @@ public class ImageService {
             throw new RuntimeException("Malformed URL for file: " + filename, e);
         }
     }
+
+    public void prependTagToAllImages(String tab, String tag) {
+    try {
+        Path dir = rootLocation.resolve(tab);
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            throw new RuntimeException("Tab directory does not exist: " + tab);
+        }
+
+        // 폴더 내 모든 파일 리스트 가져오기
+        try (Stream<Path> stream = Files.list(dir)) {
+            stream.filter(Files::isRegularFile).forEach(path -> {
+                String filename = path.getFileName().toString();
+
+                // 이미 태그가 붙어있는 경우 중복 안 붙이도록 처리 (선택사항)
+                if (!filename.startsWith(tag + "_")) {
+                    Path target = path.resolveSibling(tag + "_" + filename);
+                    try {
+                        Files.move(path, target);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to rename file: " + filename, e);
+                    }
+                }
+            });
+        }
+    } catch (IOException e) {
+        throw new RuntimeException("Failed to prepend tag to images in tab: " + tab, e);
+    }
+}
+
 }

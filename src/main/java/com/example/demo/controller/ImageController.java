@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.example.demo.service.ImageService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/images")
@@ -42,4 +43,23 @@ public class ImageController {
                 .contentType(MediaType.IMAGE_JPEG) // 기본 jpg, png 등 다양하면 확장자에 따라 바꿀 수도 있음
                 .body(file);
     }
+
+    @PostMapping("/{tab}/prepend-tag")
+    public ResponseEntity<?> prependTagToAllImages(
+            @PathVariable String tab,
+            @RequestBody Map<String, String> body) {
+
+        String tag = body.get("tag");
+        if (tag == null || tag.isEmpty()) {
+            return ResponseEntity.badRequest().body("Tag is required");
+        }
+
+        try {
+            imageService.prependTagToAllImages(tab, tag);
+            return ResponseEntity.ok("Tag prepended successfully to all images");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed to prepend tag: " + e.getMessage());
+        }
+    }
+
 }
