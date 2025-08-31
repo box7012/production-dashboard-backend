@@ -9,9 +9,15 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 @RestController
 @RequestMapping("/api")
@@ -38,11 +44,11 @@ public class FileController {
         }
     }
 
-    // 전체 현황 - D02, D07, D14, D20 모든 폴더 내 zip 파일 합쳐서 반환
+    // 전체 현황 - 라인별로 나눠서 반환
     @GetMapping("/files/all")
-    public List<String> listAllZipFiles() throws IOException {
+    public Map<String, List<String>> listAllZipFilesByFolder() throws IOException {
         String[] folders = {"D02", "D07", "D14", "D20"};
-        List<String> allFiles = new ArrayList<>();
+        Map<String, List<String>> result = new LinkedHashMap<>();
 
         for (String folder : folders) {
             Path folderPath = baseFilesLocation.resolve(folder).normalize();
@@ -55,12 +61,14 @@ public class FileController {
                             .map(Path::toString)
                             .filter(name -> name.toLowerCase().endsWith(".zip"))
                             .collect(Collectors.toList());
-                    allFiles.addAll(zipFiles);
+                    result.put(folder, zipFiles);
                 }
+            } else {
+                result.put(folder, new ArrayList<>()); // 폴더 없으면 빈 리스트
             }
         }
 
-        return allFiles;
+        return result;
     }
 
     // 파일 다운로드 - 폴더명과 파일명 받아서 다운로드 처리
